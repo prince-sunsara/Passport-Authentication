@@ -7,6 +7,8 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 // const encrypt = require("mongoose-encryption"); // level 2 security
 // const  md5 = require("md5"); // level 3 security (hashing)
+const bcrypt = require("bcrypt"); // level 4 sucurity
+const saltRounds = 10;
 
 const app = express();
 
@@ -42,14 +44,20 @@ app.get("/login", (req, res) => {
 
 app.post("/login", (req, res) => {
     const userEmail = req.body.username;
-    const userPassword = md5(req.body.password);
+    // const userPassword = md5(req.body.password); // level 3 security
+    const userPassword = req.body.password;
 
     User.findOne({email: userEmail}).then((user) => {
-        if(user.password === userPassword) {
-            res.render("secrets");
-        } else {
-            console.log("Enter correct password");
-        }
+        // if(user.password === userPassword) {
+        //     res.render("secrets");
+        // } else {
+        //     console.log("Enter correct password");
+        // }
+        bcrypt.compare(userPassword, user.password, (err, result) => { // level 4 security
+            if(result === true) {
+                res.render("secrets");
+            }
+        });
     }).catch((err) => {
         console.log(err);
     })
@@ -62,16 +70,20 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-    const newUser = new User({
-        email: req.body.username,
-        password: md5(req.body.password)
+    bcrypt.hash(req.body.password, saltRounds, (err, hash) => { // level 4 security
+        const newUser = new User({
+            email: req.body.username,
+            // password: md5(req.body.password) // level3 security
+            password: hash
+        });
+        newUser.save().then(() => {
+            console.log("Successfully created new user.");
+            res.render("secrets");
+        }).catch((err) => {
+            console.log(err);
+        });
     });
-    newUser.save().then(() => {
-        console.log("Successfully created new user.");
-        res.render("secrets");
-    }).catch((err) => {
-        console.log(err);
-    });
+    
 });
 
 
