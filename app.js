@@ -72,7 +72,7 @@ passport.use(new GoogleStrategy({
     scope: ['profile', 'email']
 }, (accessToken, refreshToken, profile, cb) => {
     // console.log(profile);
-    User.findOrCreate({ googleID: profile.id }, function (err, user) {
+    User.findOrCreate({ username: profile.emails[0].value, googleID: profile.id }, function (err, user) {
         return cb(err, user);
     });
 }
@@ -85,7 +85,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/auth/google",
-    passport.authenticate("google", { scope: ["profile"] }),
+    passport.authenticate("google", { scope: ["profile", "email"] }),
     (req, res) => {
         // Successfull authentication, redirect to secrets.
         res.redirect("/auth/google/secrets");
@@ -164,7 +164,7 @@ app.route("/submit")
             user.secret = submittedSecrete;
             user.save().then(() => {
                 res.redirect("/secrets");
-            })
+            });
         }).catch((err) => {
             console.log(err);
         });
