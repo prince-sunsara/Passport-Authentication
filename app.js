@@ -22,7 +22,10 @@ app.set('view engine', 'ejs');
 app.use(session({
     secret: "This is my secrete.",
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 24 * 60 * 60 * 1000 // 1 day
+    }
 }));
 
 app.use(passport.initialize());
@@ -93,7 +96,10 @@ app.get("/auth/google",
 );
 
 app.get("/auth/google/secrets",
-    passport.authenticate('google', { failureRedirect: "/login" }),
+    passport.authenticate('google', {
+        failureRedirect: "/login",
+        session: true
+    }),
     (req, res) => {
         // Successful authentication, redirect to secrets.
         res.redirect("/secrets");
@@ -143,7 +149,14 @@ app.route("/login")
 
 // secrets route
 app.get("/secrets", (req, res) => {
-    User.find({ "secret": { $ne: null } }).then((user) => {
+    // console.log(req.user.id);
+    User.findById(req.user.id).then((user) => {
+        // User.find({ "secret": { $ne: null } }).then((user) => {
+        //     res.render("secrets", { usersWithSecrets: user })
+        // }).catch((err) => {
+        //     console.log(err);
+        // });
+        console.log("My user : " + user);
         res.render("secrets", { usersWithSecrets: user })
     }).catch((err) => {
         console.log(err);
